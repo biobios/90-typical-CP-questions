@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <utility>
 #include <cmath>
+#include <array>
 
 using namespace std;
 
@@ -34,59 +35,48 @@ int main()
         }
     }
 
-    vector<vector<uint64_t>> costs(H, vector<uint64_t>(W, -1ull));
+    vector<vector<array<uint64_t, 4>>> costs(H, vector<array<uint64_t, 4>>(W, array<uint64_t, 4>{-1ull, -1ull, -1ull, -1ull}));
+    //                     cost       i        j         direction
     using node_t = tuple<uint64_t, uint64_t, uint64_t, uint64_t>;
     priority_queue<node_t, vector<node_t>, greater<node_t>> q;
-    q.push({0, rs, cs, 0b10000});
+    q.push({0, rs, cs, 0});
+    q.push({0, rs, cs, 1});
+    q.push({0, rs, cs, 2});
+    q.push({0, rs, cs, 3});
     while (!q.empty())
     {
         auto [cost, i, j, direction] = q.top();
         q.pop();
-        if (cost > costs[i][j])
+        if (cost >= costs[i][j][direction])
             continue;
 
-        costs[i][j] = cost;
+        for (auto &&c : costs[i][j])
+        {
+            c = min(c, cost + 1);
+        }
 
-        uint64_t new_cost;
+        costs[i][j][direction] = cost;
 
-        if (i > 0 && grid[i - 1][j] != '#' && ((direction & 0b0100) == 0))
+        if (i > 0 && grid[i - 1][j] != '#' && direction != 2)
         {
-            new_cost = cost;
-            if ((direction & 0b10001) == 0)
-            {
-                new_cost++;
-            }
-            q.push({new_cost, i - 1, j, 0b0001});
+            q.push({costs[i][j][0], i - 1, j, 0});
         }
-        if (j > 0 && grid[i][j - 1] != '#' && ((direction & 0b1000) == 0))
+        if (j > 0 && grid[i][j - 1] != '#' && direction != 3)
         {
-            new_cost = cost;
-            if ((direction & 0b10010) == 0)
-            {
-                new_cost++;
-            }
-            q.push({new_cost, i, j - 1, 0b0010});
+            q.push({costs[i][j][1], i, j - 1, 1});
         }
-        if (i < H - 1 && grid[i + 1][j] != '#' && ((direction & 0b0001) == 0))
+        if (i < H - 1 && grid[i + 1][j] != '#' && direction != 0)
         {
-            new_cost = cost;
-            if ((direction & 0b10100) == 0)
-            {
-                new_cost++;
-            }
-            q.push({new_cost, i + 1, j, 0b0100});
+            q.push({costs[i][j][2], i + 1, j, 2});
         }
-        if (j < W - 1 && grid[i][j + 1] != '#' && ((direction & 0b0010) == 0))
+        if (j < W - 1 && grid[i][j + 1] != '#' && direction != 1)
         {
-            new_cost = cost;
-            if ((direction & 0b11000) == 0)
-            {
-                new_cost++;
-            }
-            q.push({new_cost, i, j + 1, 0b1000});
+            q.push({costs[i][j][3], i, j + 1, 3});
         }
     }
 
-    cout << costs[rt][ct] << endl;
+    sort(costs[rt][ct].begin(), costs[rt][ct].end());
+
+    cout << costs[rt][ct][0] << endl;
     return 0;
 }
