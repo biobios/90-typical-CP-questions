@@ -37,7 +37,7 @@ int main()
         }
     }
 
-    int64_t result = 0;
+    uint64_t result = 0;
     for (size_t i = 0; i < H; i++)
     {
         for (size_t j = 0; j < W; j++)
@@ -45,76 +45,40 @@ int main()
             if (grid[i][j] == '#')
                 continue;
 
-            vector<vector<int64_t>> costs(pow(2, H * W), vector<int64_t>(H * W, -10000));
-            costs[1 << calcBit(i, j, W)][calcBit(i, j, W)] = 0;
-            for (uint64_t s = 0; s < pow(2, H * W); s++)
-                for (size_t y = 0; y < H; y++)
-                    for (size_t x = 0; x < W; x++)
-                    {
-                        uint64_t u = y * W + x;
-                        if (y > 0 && grid[y - 1][x] != '#')
-                        {
-                            uint64_t v = calcBit(y - 1, x, W);
-                            if (hasBeen(s, u, v))
-                            {
-                                uint64_t ns = s | (1 << v);
-                                costs[ns][v] = max(costs[ns][v], costs[s][u] + 1);
-                            }
-                        }
-                        if (x > 0 && grid[y][x - 1] != '#')
-                        {
-                            uint64_t v = calcBit(y, x - 1, W);
-                            if (hasBeen(s, u, v))
-                            {
-                                uint64_t ns = s | (1 << v);
-                                costs[ns][v] = max(costs[ns][v], costs[s][u] + 1);
-                            }
-                        }
-                        if (y < H - 1 && grid[y + 1][x] != '#')
-                        {
-                            uint64_t v = calcBit(y + 1, x, W);
-                            if (hasBeen(s, u, v))
-                            {
-                                uint64_t ns = s | (1 << v);
-                                costs[ns][v] = max(costs[ns][v], costs[s][u] + 1);
-                            }
-                        }
-                        if (x < W - 1 && grid[y][x + 1] != '#')
-                        {
-                            uint64_t v = calcBit(y, x + 1, W);
-                            if (hasBeen(s, u, v))
-                            {
-                                uint64_t ns = s | (1 << v);
-                                costs[ns][v] = max(costs[ns][v], costs[s][u] + 1);
-                            }
-                        }
-                    }
-
-            for (uint64_t s = 0; s < pow(2, H * W); s++)
+            //             i         j      hasbeen     length
+            stack<tuple<uint64_t, uint64_t, uint64_t, uint64_t>> S;
+            S.push({i, j, 0, 0});
+            while (!S.empty())
             {
-                if (i > 0)
+                auto [y, x, hasbeen_flag, length] = S.top();
+                S.pop();
+                if (i == y && j == x && result < length)
                 {
-                    uint64_t u = calcBit(i - 1, j, W);
-                    if (costs[s][u] + 1 > result)
-                        result = costs[s][u] + 1;
+                    result = length;
+                    continue;
                 }
-                if (j > 0)
+                uint64_t u = 0b1 << calcBit(y, x, W);
+                if ((hasbeen_flag & u) != 0)
                 {
-                    uint64_t u = calcBit(i, j - 1, W);
-                    if (costs[s][u] + 1 > result)
-                        result = costs[s][u] + 1;
+                    continue;
                 }
-                if (i < H - 1)
+                hasbeen_flag |= u;
+
+                if (y > 0 && grid[y - 1][x] != '#')
                 {
-                    uint64_t u = calcBit(i + 1, j, W);
-                    if (costs[s][u] + 1 > result)
-                        result = costs[s][u] + 1;
+                    S.push({y - 1, x, hasbeen_flag, length + 1});
                 }
-                if (j < W - 1)
+                if (x > 0 && grid[y][x - 1] != '#')
                 {
-                    uint64_t u = calcBit(i, j + 1, W);
-                    if (costs[s][u] + 1 > result)
-                        result = costs[s][u] + 1;
+                    S.push({y, x - 1, hasbeen_flag, length + 1});
+                }
+                if (y < H - 1 && grid[y + 1][x] != '#')
+                {
+                    S.push({y + 1, x, hasbeen_flag, length + 1});
+                }
+                if (x < W - 1 && grid[y][x + 1] != '#')
+                {
+                    S.push({y, x + 1, hasbeen_flag, length + 1});
                 }
             }
         }
