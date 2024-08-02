@@ -20,22 +20,13 @@ int main()
     cin >> K;
 
     map<uint64_t, size_t> prime_factor;
-    bitset<(size_t)1e6 + 1> is_not_prime;
 
-    for (size_t i = 2; i <= sqrt(K); i++)
+    for (size_t i = 2; i * i <= K; i++)
     {
-        if (!is_not_prime[i])
+        while (K % i == 0)
         {
-            for (size_t j = i * i; j <= sqrt(K); j += i)
-            {
-                is_not_prime[j] = true;
-            }
-
-            while (K % i == 0)
-            {
-                K /= i;
-                prime_factor[i]++;
-            }
+            K /= i;
+            prime_factor[i]++;
         }
     }
     if (K != 1)
